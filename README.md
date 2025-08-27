@@ -1,12 +1,18 @@
 # Strands AI Project
 
-This project demonstrates how to use the Strands AI framework with the Ollama model provider to create an AI agent.
+This project demonstrates how to use the Strands AI framework with the Ollama model provider to create AI agents for various purposes.
+
+## Features
+
+- Basic AI text generation with Ollama models
+- Twitter/X tweet management with keyword-based deletion
 
 ## Prerequisites
 
 - Python 3.8+
 - [Ollama](https://ollama.com/) installed and running locally
 - Internet connection (for pulling models)
+- Twitter Developer Account (for Twitter functionality)
 
 ## Setup Instructions
 
@@ -24,7 +30,7 @@ This project demonstrates how to use the Strands AI framework with the Ollama mo
 
 3. **Install dependencies**
    ```bash
-   pip install strands
+   pip install -r requirements.txt
    ```
 
 4. **Start Ollama**
@@ -33,40 +39,81 @@ This project demonstrates how to use the Strands AI framework with the Ollama mo
    ```bash
    ollama serve
    ```
-   
-   In a separate terminal window, you can verify it's running with:
-   ```bash
-   ollama list
+
+5. **Configure Twitter API credentials**
+
+   Create a Twitter Developer account at https://developer.twitter.com and create a project and app with:
+   - Read and Write permissions
+   - OAuth 1.0a and OAuth 2.0 authentication
+
+   Then copy `.env.example` to `.env` and fill in your Twitter API credentials:
+   ```
+   TWITTER_CONSUMER_KEY=your_consumer_key
+   TWITTER_CONSUMER_SECRET=your_consumer_secret
+   TWITTER_ACCESS_TOKEN=your_access_token
+   TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
+   TWITTER_BEARER_TOKEN=your_bearer_token
    ```
 
-## Running the Example
+## Running the Examples
 
-Execute the agent script to interact with the AI:
+### Basic AI Text Generation
 
 ```bash
 python agent.py
 ```
 
-The script will:
-1. List available Ollama models
-2. Pull the specified model (currently `llama3.2:latest`)
-3. Create an agent using this model
-4. Send a request to generate a short story about an AI assistant
-5. Display the response
+### Twitter Tweet Cleaner
 
-## Customizing
+This tool uses AI to analyze your tweets and delete those containing specific keywords.
 
-To use a different model, modify the `model_name` variable in `agent.py`. Available models depend on what you've pulled with Ollama.
+#### Command-line Usage
+
+First, run in dry-run mode to see what would be deleted:
+
+```bash
+python twitter_cleaner.py --keywords politics complaint negative --max 50
+```
+
+When you're ready to actually delete tweets:
+
+```bash
+python twitter_cleaner.py --keywords politics complaint negative --execute --max 50
+```
+
+Parameters:
+- `--keywords`: List of keywords to search for in tweets
+- `--execute`: Actually delete tweets (without this flag, runs in dry-run mode)
+- `--max`: Maximum number of recent tweets to analyze (default: 100)
+
+#### Interactive Tweet Cleaner
+
+For a more user-friendly experience, try the interactive tweet cleaner:
+
+```bash
+python interactive_tweet_cleaner.py
+```
+
+This script will guide you through the process with interactive prompts.
+
+#### Quick Demo
+
+To run a quick demonstration that shows how the tweet cleaner works:
+
+```bash
+python tweet_deletion_demo.py
+```
+
+This will analyze your tweets for common keywords like "politics", "negative", etc. and show which ones would be deleted without actually deleting them until you confirm.
 
 ## Troubleshooting
 
-If you encounter errors:
+### Ollama Issues
+- Make sure Ollama is running (`ollama serve`)
+- Check available models (`ollama list`)
+- Try pulling the model manually (`ollama pull <model-name>`)
 
-1. Make sure Ollama is running (`ollama serve`)
-2. Check available models (`ollama list`)
-3. Try pulling the model manually (`ollama pull <model-name>`)
-4. Verify your network connection if pulling new models
-
-## Future Enhancements
-
-This is a simple demonstration that will be enhanced with additional features in future updates.
+### Twitter API Issues
+- Verify your API credentials are correct in the `.env` file
+- Ensure your Twitter Developer app has the correct permissions
+- Check that your access tokens are valid and not expired
