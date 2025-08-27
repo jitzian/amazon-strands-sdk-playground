@@ -33,30 +33,37 @@ def authenticate_twitter():
 
 def setup_ai_agent(model_name="llama3.2:latest"):
     """Setup the Strands AI agent"""
+    import importlib
+    
+    print(f"Setting up AI agent with model: {model_name}")
+    
+    # Get strands version
+    strands_version = importlib.import_module('strands').__version__ if hasattr(importlib.import_module('strands'), '__version__') else "unknown"
+    print(f"Using strands version: {strands_version}")
+    
+    # Get ollama package version
+    try:
+        ollama_pkg = importlib.import_module('ollama')
+        ollama_version = ollama_pkg.__version__ if hasattr(ollama_pkg, '__version__') else "unknown"
+        print(f"Using ollama package version: {ollama_version}")
+    except ImportError:
+        print("Ollama package not found")
+    
     # Create a configured Ollama model with simplified options
     try:
-        # First try with newer API
+        # Create an Ollama model with compatibility settings
         ollama_model = OllamaModel(
             host="http://localhost:11434",
-            model_id=model_name
+            model_id=model_name,
+            # Pass minimal parameters to avoid incompatibilities
+            options={}  # Empty options to avoid potential compatibility issues
         )
         
         # Create an agent with the configured model
         return Agent(model=ollama_model)
     except Exception as e:
-        print(f"Warning: Error initializing agent with default parameters: {str(e)}")
-        print("Trying alternative configuration...")
-        
-        # Try with a simpler configuration
-        ollama_model = OllamaModel(
-            host="http://localhost:11434",
-            model_id=model_name,
-            options={
-                "disable_tools": True  # This might help with the 'tools' parameter issue
-            }
-        )
-        
-        return Agent(model=ollama_model)
+        print(f"Error initializing agent: {str(e)}")
+        raise
 
 def should_delete_tweet(agent, tweet_text, keywords):
     """Use the AI agent to decide if a tweet should be deleted based on keywords"""
@@ -68,10 +75,26 @@ def should_delete_tweet(agent, tweet_text, keywords):
     Respond with only "YES" if the tweet should be deleted (contains or strongly relates to any keyword), or "NO" if it should be kept.
     """
     
-    # Use the correct method for the installed version of strands
-    response = agent(prompt)
+    # Try direct Ollama access first as a backup approach
+    try:
+        import ollama
+        print(f"Using direct Ollama API for tweet analysis...")
+        model_name = "llama3.2:latest"  # Use the same model that the agent was configured with
+        response = ollama.generate(model=model_name, prompt=prompt)
+        result = response['response']
+        print(f"Ollama direct API response: {result[:20]}...")
+        return "YES" in result.upper()
+    except Exception as e:
+        print(f"Direct Ollama API failed: {str(e)}, falling back to agent")
         
-    return "YES" in response.upper()
+        # Fall back to using the agent (which might fail depending on compatibility)
+        try:
+            response = agent(prompt)
+            return "YES" in response.upper()
+        except Exception as e:
+            print(f"Agent-based analysis failed: {str(e)}")
+            # If everything fails, be conservative and don't delete
+            return False
 
 def fetch_user_tweets(client, max_results=100):
     """Fetch recent tweets from the authenticated user"""

@@ -88,18 +88,25 @@ def demo_tweet_cleaner(keywords, dry_run=True):
     print(f"\nSummary: {action} {deleted_count} out of {len(MOCK_TWEETS)} tweets based on keywords: {keywords}")
 
 if __name__ == "__main__":
-    # Define keywords to search for
-    keywords = ["politics", "negative", "complaint", "disappointed"]
-    
-    # Run the demo in dry-run mode first
-    print("\n--- Dry Run Mode ---")
-    demo_tweet_cleaner(keywords, dry_run=True)
-    
-    # Ask if user wants to simulate actual deletion
-    response = input("\nSimulate actual deletion? (yes/no): ").lower().strip()
-    
-    if response == "yes":
-        print("\n--- Simulated Deletion Mode ---")
-        demo_tweet_cleaner(keywords, dry_run=False)
-    else:
-        print("\nSimulated deletion canceled.")
+    try:
+        # Define keywords to search for
+        keywords = ["politics", "negative", "complaint", "disappointed"]
+        
+        print("Starting mock tweet cleaner demo with ollama version:", ollama.__version__ if hasattr(ollama, '__version__') else "unknown")
+        
+        # Run the demo in dry-run mode first
+        print("\n--- Dry Run Mode ---")
+        demo_tweet_cleaner(keywords, dry_run=True)
+        
+        # Ask if user wants to simulate actual deletion
+        response = input("\nSimulate actual deletion? (yes/no): ").lower().strip()
+        
+        if response == "yes":
+            print("\n--- Simulated Deletion Mode ---")
+            demo_tweet_cleaner(keywords, dry_run=False)
+        else:
+            print("\nSimulated deletion canceled.")
+    except Exception as e:
+        print(f"\nERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
