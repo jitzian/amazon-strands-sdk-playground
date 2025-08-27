@@ -72,13 +72,13 @@ This tool uses AI to analyze your tweets and delete those containing specific ke
 First, run in dry-run mode to see what would be deleted:
 
 ```bash
-python twitter_cleaner.py --keywords politics complaint negative --max 50
+python twitter_cleaner.py --keywords football complaint negative --max 50
 ```
 
 When you're ready to actually delete tweets:
 
 ```bash
-python twitter_cleaner.py --keywords politics complaint negative --execute --max 50
+python twitter_cleaner.py --keywords football complaint negative --execute --max 50
 ```
 
 Parameters:
