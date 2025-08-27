@@ -104,7 +104,7 @@ To run a quick demonstration that shows how the tweet cleaner works:
 python tweet_deletion_demo.py
 ```
 
-This will analyze your tweets for common keywords like "politics", "negative", etc. and show which ones would be deleted without actually deleting them until you confirm.
+This will analyze your tweets for common keywords like "football", "flowers", etc. and show which ones would be deleted without actually deleting them until you confirm.
 
 ## Troubleshooting
 
