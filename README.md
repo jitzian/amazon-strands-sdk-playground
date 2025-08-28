@@ -43,16 +43,24 @@ This project demonstrates how to use the Strands AI framework with the Ollama mo
 5. **Configure Twitter API credentials**
 
    Create a Twitter Developer account at https://developer.twitter.com and create a project and app with:
-   - Read and Write permissions
-   - OAuth 1.0a and OAuth 2.0 authentication
+   - **Read and Write permissions** (IMPORTANT: without Write permissions, you cannot delete tweets)
+   - OAuth 1.0a authentication (required for tweet deletion)
 
-   Then copy `.env.example` to `.env` and fill in your Twitter API credentials:
+   **Detailed Setup Guide**: See [TWITTER_API_SETUP.md](TWITTER_API_SETUP.md) for complete instructions on setting up your Twitter Developer App correctly.
+
+   Quick Setup:
+   1. Create a project and app in the [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)
+   2. Set app permissions to "Read and write"
+   3. Enable OAuth 1.0a authentication
+   4. Fill in required app information (callback URL, website URL, etc.)
+   5. Generate API keys and access tokens
+   6. Copy `.env.example` to `.env` and fill in your Twitter API credentials:
    ```
-   TWITTER_CONSUMER_KEY=your_consumer_key
-   TWITTER_CONSUMER_SECRET=your_consumer_secret
+   TWITTER_CONSUMER_KEY=your_api_key
+   TWITTER_CONSUMER_SECRET=your_api_key_secret
    TWITTER_ACCESS_TOKEN=your_access_token
    TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
-   TWITTER_BEARER_TOKEN=your_bearer_token
+   TWITTER_BEARER_TOKEN=your_bearer_token      # Optional
    ```
 
 ## Running the Examples
@@ -72,13 +80,13 @@ This tool uses AI to analyze your tweets and delete those containing specific ke
 First, run in dry-run mode to see what would be deleted:
 
 ```bash
-python twitter_cleaner.py --keywords football complaint negative --max 50
+python twitter_cleaner.py --keywords sports complaint negative --max 50
 ```
 
 When you're ready to actually delete tweets:
 
 ```bash
-python twitter_cleaner.py --keywords football complaint negative --execute --max 50
+python twitter_cleaner.py --keywords sports complaint negative --execute --max 50
 ```
 
 Parameters:
@@ -104,7 +112,7 @@ To run a quick demonstration that shows how the tweet cleaner works:
 python tweet_deletion_demo.py
 ```
 
-This will analyze your tweets for common keywords like "football", "flowers", etc. and show which ones would be deleted without actually deleting them until you confirm.
+This will analyze your tweets for common keywords like "sports", "fun", etc. and show which ones would be deleted without actually deleting them until you confirm.
 
 ## Troubleshooting
 

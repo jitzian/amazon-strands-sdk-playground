@@ -17,16 +17,24 @@ def authenticate_twitter():
     access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
     bearer_token = os.getenv("TWITTER_BEARER_TOKEN")
     
-    if not all([consumer_key, consumer_secret, access_token, access_token_secret, bearer_token]):
-        raise ValueError("Twitter API credentials are missing from environment variables")
+    if not all([consumer_key, consumer_secret, access_token, access_token_secret]):
+        raise ValueError("Twitter API OAuth 1.0a credentials are missing from environment variables")
+    
+    # For tweet deletion, OAuth 1.0a authentication is required
+    # OAuth 1.0a requires consumer_key, consumer_secret, access_token, access_token_secret
+    print("Initializing Twitter API client with OAuth 1.0a authentication...")
     
     # Authentication with Twitter API v2
     client = tweepy.Client(
-        bearer_token=bearer_token,
+        # OAuth 1.0a credentials (required for write operations like tweet deletion)
         consumer_key=consumer_key,
         consumer_secret=consumer_secret,
         access_token=access_token,
-        access_token_secret=access_token_secret
+        access_token_secret=access_token_secret,
+        # OAuth 2.0 credentials (for higher rate limits on read operations)
+        bearer_token=bearer_token if bearer_token else None,
+        # Make sure we wait for API responses (important for write operations)
+        wait_on_rate_limit=True
     )
     
     return client
@@ -121,6 +129,31 @@ def delete_tweets_with_keywords(keywords, dry_run=True, max_tweets=100):
         client = authenticate_twitter()
         print("Authentication successful!")
         
+        # Verify write permissions (only needed when actually deleting)
+        if not dry_run:
+            print("Verifying Twitter API write permissions...")
+            try:
+                # Try to post a temporary test tweet to verify write permissions
+                # We'll immediately delete it if successful
+                test_tweet = client.create_tweet(text="Testing API permissions... (will be deleted immediately)")
+                client.delete_tweet(test_tweet.data['id'])
+                print("Write permissions verified successfully!")
+            except Exception as e:
+                error_msg = str(e)
+                if "oauth1 app permissions" in error_msg.lower():
+                    print("\n⚠️ ERROR: Your Twitter Developer App does not have Write permissions!")
+                    print("\nHow to fix this:")
+                    print("1. Go to https://developer.twitter.com/en/portal/dashboard")
+                    print("2. Select your project and app")
+                    print("3. Go to 'Settings' -> 'User authentication settings'")
+                    print("4. Change App permissions to include 'Read and Write'")
+                    print("5. Regenerate your Access Token and Secret")
+                    print("6. Update your .env file with the new tokens")
+                    return
+                else:
+                    print(f"Warning: Could not verify write permissions: {error_msg}")
+                    print("Continuing anyway, but deletion may fail...")
+        
         # Setup AI agent
         print("Setting up AI agent...")
         agent = setup_ai_agent()
@@ -146,9 +179,20 @@ def delete_tweets_with_keywords(keywords, dry_run=True, max_tweets=100):
                     if dry_run:
                         print(f"Would delete tweet (ID: {tweet.id}): {tweet.text}")
                     else:
-                        client.delete_tweet(tweet.id)
-                        print(f"Deleted tweet (ID: {tweet.id}): {tweet.text}")
-                    deleted_count += 1
+                        try:
+                            client.delete_tweet(tweet.id)
+                            print(f"Deleted tweet (ID: {tweet.id}): {tweet.text}")
+                            deleted_count += 1
+                        except Exception as e:
+                            error_msg = str(e)
+                            if "oauth1 app permissions" in error_msg.lower():
+                                print("\n⚠️ ERROR: Your Twitter Developer App does not have Write permissions!")
+                                print("Please update your app permissions as described above and try again.")
+                                return
+                            else:
+                                print(f"Error deleting tweet: {error_msg}")
+                elif not dry_run:
+                    print(f"Keeping tweet: {tweet.text[:50]}...")
             except Exception as e:
                 print(f"Error analyzing tweet: {str(e)}")
                 continue
@@ -162,7 +206,19 @@ def delete_tweets_with_keywords(keywords, dry_run=True, max_tweets=100):
     except tweepy.errors.TooManyRequests:
         print("Error: Twitter API rate limit reached. Please wait a few minutes and try again.")
     except Exception as e:
-        print(f"Error: {str(e)}")
+        error_msg = str(e)
+        print(f"Error: {error_msg}")
+        
+        # Provide helpful guidance for common errors
+        if "oauth1 app permissions" in error_msg.lower():
+            print("\n⚠️ Your Twitter Developer App does not have the required permissions!")
+            print("\nHow to fix this:")
+            print("1. Go to https://developer.twitter.com/en/portal/dashboard")
+            print("2. Select your project and app")
+            print("3. Go to 'Settings' -> 'User authentication settings'")
+            print("4. Change App permissions to include 'Read and Write'")
+            print("5. Regenerate your Access Token and Secret")
+            print("6. Update your .env file with the new tokens")
 
 def main():
     parser = argparse.ArgumentParser(description='Delete tweets containing specified keywords')
